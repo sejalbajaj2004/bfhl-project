@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BFHL Tree Explorer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 24px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 130px;
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      padding: 12px;
+      resize: vertical;
+      outline: none;
+      font-family: 'Courier New', monospace;
+      transition: border 0.2s;
+    }
+
+    textarea:focus { border-color: #38bdf8; }
+
+    .hint {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-top: 6px;
+    }
+
+    button {
+      margin-top: 16px;
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 32px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover { background: #7dd3fc; }
+    button:active { transform: scale(0.97); }
+    button:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+    .error-box {
+      background: #450a0a;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 14px 18px;
+      color: #fca5a5;
+      font-size: 0.9rem;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #334155;
+    }
+
+    /* Info pills */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .info-item {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    .info-item .key {
+      font-size: 0.72rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .info-item .val {
+      font-size: 0.92rem;
+      color: #f1f5f9;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    /* Summary */
+    .summary-grid {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .summary-pill {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-size: 0.88rem;
+      color: #94a3b8;
+    }
+
+    .summary-pill span {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    /* Tags for invalid/duplicate */
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .tag {
+      background: #1e3a5f;
+      border: 1px solid #2563eb;
+      color: #93c5fd;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 0.82rem;
+      font-family: monospace;
+    }
+
+    .tag.red {
+      background: #3b0f0f;
+      border-color: #dc2626;
+      color: #fca5a5;
+    }
+
+    /* Tree cards */
+    .tree-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .tree-card .tree-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .root-badge {
+      background: #0369a1;
+      color: #e0f2fe;
+      font-weight: 700;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      padding: 3px 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .cycle-badge {
+      background: #7c2d12;
+      color: #fed7aa;
+      font-weight: 700;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      padding: 3px 10px;
+    }
+
+    .depth-badge {
+      background: #14532d;
+      color: #bbf7d0;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      padding: 3px 10px;
+    }
+
+    pre.tree-json {
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      color: #7dd3fc;
+      background: #0a1628;
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+
+    .empty-label {
+      color: #475569;
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    #loading {
+      display: none;
+      color: #38bdf8;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌳 BFHL Tree Explorer</h1>
+  <p class="subtitle">Enter node relationships and explore the tree hierarchy</p>
+
+  <div class="card">
+    <label>Node Relationships (comma or newline separated)</label>
+    <textarea id="inputData" placeholder='e.g. A->B, A->C, B->D, X->Y, Y->Z, Z->X, hello, 1->2'></textarea>
+    <p class="hint">Format: PARENT->CHILD (single uppercase letters only). Use comma or newline to separate entries.</p>
+    <button id="submitBtn" onclick="callAPI()">Submit →</button>
+    <div id="loading">⏳ Processing...</div>
+  </div>
+
+  <div id="result"></div>
+
+  <script>
+    //  Render backend URL after deploying
+    const API_URL = "https://YOUR-BACKEND-URL.onrender.com/bfhl";
+
+    async function callAPI() {
+      const raw = document.getElementById("inputData").value.trim();
+      if (!raw) { alert("Please enter some node data!"); return; }
+
+     
+      const data = raw.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("result").innerHTML = "";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data })
+        });
+
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const json = await res.json();
+        renderResult(json);
+      } catch (err) {
+        document.getElementById("result").innerHTML = `
+          <div class="card">
+            <div class="error-box">
+              ❌ API call failed: ${err.message}<br/>
+              <small>Make sure your backend is running and CORS is enabled.</small>
+            </div>
+          </div>`;
+      } finally {
+        btn.disabled = false;
+        document.getElementById("loading").style.display = "none";
+      }
+    }
+
+    function renderResult(data) {
+      let html = "";
+
+      // Identity Card
+      html += `<div class="card">
+        <div class="section-title">🪪 Identity</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="key">User ID</div><div class="val">${data.user_id}</div></div>
+          <div class="info-item"><div class="key">Email</div><div class="val">${data.email_id}</div></div>
+          <div class="info-item"><div class="key">Roll Number</div><div class="val">${data.college_roll_number}</div></div>
+        </div>
+      </div>`;
+
+      // Summary Card
+      const s = data.summary;
+      html += `<div class="card">
+        <div class="section-title">📊 Summary</div>
+        <div class="summary-grid">
+          <div class="summary-pill">Trees: <span>${s.total_trees}</span></div>
+          <div class="summary-pill">Cycles: <span>${s.total_cycles}</span></div>
+          <div class="summary-pill">Largest Tree Root: <span>${s.largest_tree_root || "—"}</span></div>
+        </div>
+      </div>`;
+
+      // Hierarchies
+      html += `<div class="card"><div class="section-title">🌲 Hierarchies</div>`;
+      if (data.hierarchies.length === 0) {
+        html += `<p class="empty-label">No hierarchies found.</p>`;
+      } else {
+        for (const h of data.hierarchies) {
+          html += `<div class="tree-card">
+            <div class="tree-header">
+              <div class="root-badge">Root: ${h.root}</div>
+              ${h.has_cycle ? '<div class="cycle-badge">⚠ Cycle</div>' : `<div class="depth-badge">Depth: ${h.depth}</div>`}
+            </div>`;
+          if (!h.has_cycle) {
+            html += `<pre class="tree-json">${JSON.stringify(h.tree, null, 2)}</pre>`;
+          } else {
+            html += `<p class="empty-label">Cyclic group — no tree structure available.</p>`;
+          }
+          html += `</div>`;
+        }
+      }
+      html += `</div>`;
+
+      // Invalid Entries
+      html += `<div class="card">
+        <div class="section-title">❌ Invalid Entries</div>`;
+      if (data.invalid_entries.length === 0) {
+        html += `<p class="empty-label">None</p>`;
+      } else {
+        html += `<div class="tag-list">`;
+        for (const e of data.invalid_entries) {
+          html += `<div class="tag red">${e}</div>`;
+        }
+        html += `</div>`;
+      }
+      html += `</div>`;
+
+      // Duplicate Edges
+      html += `<div class="card">
+        <div class="section-title">🔁 Duplicate Edges</div>`;
+      if (data.duplicate_edges.length === 0) {
+        html += `<p class="empty-label">None</p>`;
+      } else {
+        html += `<div class="tag-list">`;
+        for (const e of data.duplicate_edges) {
+          html += `<div class="tag">${e}</div>`;
+        }
+        html += `</div>`;
+      }
+      html += `</div>`;
+
+      document.getElementById("result").innerHTML = html;
+    }
+  </script>
+</body>
+</html>
